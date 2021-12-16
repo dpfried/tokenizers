@@ -30,6 +30,7 @@ class ByteLevelBPETokenizer(BaseTokenizer):
         continuing_subword_prefix: Optional[str] = None,
         end_of_word_suffix: Optional[str] = None,
         trim_offsets: bool = False,
+        pretokenizer_split_newlines_only: bool = False,
     ):
         if vocab is not None and merges is not None:
             tokenizer = Tokenizer(
@@ -60,7 +61,7 @@ class ByteLevelBPETokenizer(BaseTokenizer):
             else:
                 tokenizer.normalizer = normalizers[0]
 
-        tokenizer.pre_tokenizer = pre_tokenizers.ByteLevel(add_prefix_space=add_prefix_space)
+        tokenizer.pre_tokenizer = pre_tokenizers.ByteLevel(add_prefix_space=add_prefix_space, pretokenizer_split_newlines_only=pretokenizer_split_newlines_only)
         tokenizer.decoder = decoders.ByteLevel()
         tokenizer.post_processor = processors.ByteLevel(trim_offsets=trim_offsets)
 
@@ -73,6 +74,7 @@ class ByteLevelBPETokenizer(BaseTokenizer):
             "continuing_subword_prefix": continuing_subword_prefix,
             "end_of_word_suffix": end_of_word_suffix,
             "trim_offsets": trim_offsets,
+            "pretokenizer_split_newlines_only": pretokenizer_split_newlines_only,
         }
 
         super().__init__(tokenizer, parameters)

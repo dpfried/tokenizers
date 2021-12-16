@@ -33,7 +33,9 @@ fn bytes_char() -> HashMap<u8, char> {
 
 lazy_static! {
     static ref RE: Regex =
-        // Regex::new(r"'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+")
+        Regex::new(r"'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+")
+            .unwrap();
+    static ref RE_NEWLINES_ONLY: Regex =
         Regex::new(r"[\r\n]+")
             .unwrap();
     static ref BYTES_CHAR: HashMap<u8, char> = bytes_char();
@@ -53,21 +55,25 @@ pub struct ByteLevel {
     pub add_prefix_space: bool,
     /// Whether the post processing step should trim offsets to avoid including whitespaces.
     pub trim_offsets: bool,
+    /// Whether to have the pretokenizer only split on newlines (to e.g. allow merging across spaces and contractions)
+    pub pretokenizer_split_newlines_only: bool,
 }
 impl Default for ByteLevel {
     fn default() -> Self {
         Self {
             add_prefix_space: true,
             trim_offsets: true,
+            pretokenizer_split_newlines_only: false,
         }
     }
 }
 
 impl ByteLevel {
-    pub fn new(add_prefix_space: bool, trim_offsets: bool) -> Self {
+    pub fn new(add_prefix_space: bool, trim_offsets: bool, pretokenizer_split_newlines_only: bool) -> Self {
         ByteLevel {
             add_prefix_space,
             trim_offsets,
+            pretokenizer_split_newlines_only,
         }
     }
 
@@ -84,6 +90,11 @@ impl ByteLevel {
         self.trim_offsets = v;
         self
     }
+
+    pub fn pretokenizer_split_newlines_only(mut self, v: bool) -> Self {
+        self.pretokenizer_split_newlines_only = v;
+        self
+    }
 }
 
 /// As a `PreTokenizer`, `ByteLevel` is in charge of transforming all the unicode characters into
@@ -91,7 +102,7 @@ impl ByteLevel {
 // TODO: Give the ability to modify this regex
 impl PreTokenizer for ByteLevel {
     fn pre_tokenize(&self, pretokenized: &mut PreTokenizedString) -> Result<()> {
-        let re_ref: &Regex = &RE;
+        let re_ref: &Regex = if self.pretokenizer_split_newlines_only { &RE_NEWLINES_ONLY } else { &RE };
         pretokenized.split(|_, mut normalized| {
             if self.add_prefix_space && !normalized.get().starts_with(' ') {
                 normalized.prepend(" ");

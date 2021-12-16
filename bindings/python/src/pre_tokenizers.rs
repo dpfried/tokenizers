@@ -229,7 +229,7 @@ macro_rules! setter {
 ///         Whether to add a space to the first word if there isn't already one. This
 ///         lets us treat `hello` exactly like `say hello`.
 #[pyclass(extends=PyPreTokenizer, module = "tokenizers.pre_tokenizers", name=ByteLevel)]
-#[text_signature = "(self, add_prefix_space=True)"]
+#[text_signature = "(self, add_prefix_space=True, pretokenizer_split_newlines_only=pretokenizer_split_newlines_only=False)"]
 pub struct PyByteLevel {}
 #[pymethods]
 impl PyByteLevel {
@@ -243,13 +243,24 @@ impl PyByteLevel {
         setter!(self_, ByteLevel, add_prefix_space, add_prefix_space);
     }
 
+    #[getter]
+    fn get_pretokenizer_split_newlines_only(self_: PyRef<Self>) -> bool {
+        getter!(self_, ByteLevel, pretokenizer_split_newlines_only)
+    }
+
+    #[setter]
+    fn set_pretokenizer_split_newlines_only(self_: PyRef<Self>, pretokenizer_split_newlines_only: bool) {
+        setter!(self_, ByteLevel, pretokenizer_split_newlines_only, pretokenizer_split_newlines_only);
+    }
+
     #[new]
-    #[args(add_prefix_space = "true", _kwargs = "**")]
-    fn new(add_prefix_space: bool, _kwargs: Option<&PyDict>) -> (Self, PyPreTokenizer) {
+    #[args(add_prefix_space = "true", pretokenizer_split_newlines_only = "false", _kwargs = "**")]
+    fn new(add_prefix_space: bool, pretokenizer_split_newlines_only: bool, _kwargs: Option<&PyDict>) -> (Self, PyPreTokenizer) {
         (
             PyByteLevel {},
             ByteLevel::default()
                 .add_prefix_space(add_prefix_space)
+                .pretokenizer_split_newlines_only(pretokenizer_split_newlines_only)
                 .into(),
         )
     }
